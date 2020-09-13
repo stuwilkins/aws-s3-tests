@@ -21,7 +21,7 @@ bool CreateTIFF(const Aws::String& bucketName,
     config.endpointOverride = "https://dtn01.sdcc.bnl.gov:8000";
     config.verifySSL = false;
 
-	Aws::S3::S3Client s3_client(config);
+    Aws::S3::S3Client s3_client(config);
 
     // Aws::S3::Model::CreateBucketRequest request;
     // request.SetBucket(bucketName);
