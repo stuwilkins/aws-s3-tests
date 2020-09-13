@@ -14,7 +14,7 @@
 #include <tiffio.h>
 #include <tiffio.hxx>
 
-bool CreateBucket(const Aws::String& bucketName, 
+bool CreateTIFF(const Aws::String& bucketName, 
     const Aws::S3::Model::BucketLocationConstraint& region)
 {
     Aws::Client::ClientConfiguration config;
@@ -23,18 +23,18 @@ bool CreateBucket(const Aws::String& bucketName,
 
 	Aws::S3::S3Client s3_client(config);
 
-    Aws::S3::Model::CreateBucketRequest request;
-    request.SetBucket(bucketName);
+    // Aws::S3::Model::CreateBucketRequest request;
+    // request.SetBucket(bucketName);
 
     // You only need to set the AWS Region for the bucket if it is 
     // other than US East (N. Virginia) us-east-1.
-    if (region != Aws::S3::Model::BucketLocationConstraint::us_east_1)
-    {
-        Aws::S3::Model::CreateBucketConfiguration bucket_config;
-        bucket_config.SetLocationConstraint(region);
+    // if (region != Aws::S3::Model::BucketLocationConstraint::us_east_1)
+    // {
+    //     Aws::S3::Model::CreateBucketConfiguration bucket_config;
+    //     bucket_config.SetLocationConstraint(region);
 
-        request.SetCreateBucketConfiguration(bucket_config);
-    }
+    //     request.SetCreateBucketConfiguration(bucket_config);
+    // }
 
     // Aws::S3::Model::CreateBucketOutcome outcome = 
     //     s3_client.CreateBucket(request);
@@ -58,10 +58,10 @@ bool CreateBucket(const Aws::String& bucketName,
 
     std::cout << "Bucket : " << bucketName << std::endl;
 
-    std::shared_ptr<Aws::IOStream> input_data =
+    std::shared_ptr<Aws::IOStream> aws_stream =
         Aws::MakeShared<Aws::StringStream>("");
 
-    std::ostream *tiff_data = input_data.get();
+    std::ostream *tiff_data = aws_stream.get();
 
     TIFF *tiff = TIFFStreamOpen("TIFF", tiff_data);
     // TIFF *tiff = TIFFOpen("test.tiff", "w");
@@ -93,7 +93,7 @@ bool CreateBucket(const Aws::String& bucketName,
 
     TIFFClose(tiff);
 
-    object_request.SetBody(input_data);
+    object_request.SetBody(aws_stream);
 
     Aws::S3::Model::PutObjectOutcome object_outcome =
         s3_client.PutObject(object_request);
@@ -121,15 +121,12 @@ int main()
         Aws::S3::Model::BucketLocationConstraint region =
             Aws::S3::Model::BucketLocationConstraint::us_east_1;
 
-        // Create a unique bucket name to increase the chance of success 
-        // when trying to create the bucket.
-        // Format: "my-bucket-" + lowercase UUID.
         Aws::String uuid = Aws::Utils::UUID::RandomUUID();
         Aws::String bucket_name = "swilkins/" + 
             Aws::Utils::StringUtils::ToLower(uuid.c_str());
 
         // Create the bucket.
-        CreateBucket(bucket_name, region);
+        CreateTIFF(bucket_name, region);
     }
     ShutdownAPI(options);
 
