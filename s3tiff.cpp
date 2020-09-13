@@ -53,58 +53,67 @@ bool CreateTIFF(const Aws::String& bucketName,
     // Now write a TIFF
 
     Aws::S3::Model::PutObjectRequest object_request;
-    object_request.SetBucket(bucketName);
-    object_request.SetKey("image.tiff");
 
-    std::cout << "Bucket : " << bucketName << std::endl;
+    for(int i=0; i < 10; i++) {
 
-    std::shared_ptr<Aws::IOStream> aws_stream =
-        Aws::MakeShared<Aws::StringStream>("");
+        object_request.SetBucket(bucketName);
 
-    std::ostream *tiff_data = aws_stream.get();
+        char name[256];
+        snprintf(name, 256, "image%04d.tiff", i);
 
-    TIFF *tiff = TIFFStreamOpen("TIFF", tiff_data);
-    // TIFF *tiff = TIFFOpen("test.tiff", "w");
-    // if (!tiff) {
-    //     std::cerr << "Unable to open TIFF file for writing." << std::endl;
-    //     return 1;
-    // }
+        object_request.SetKey(name);
 
-    int bitsPerSample=8, sampleFormat=SAMPLEFORMAT_INT, samplesPerPixel;
-    int width=1024, height=1024;
-    char *image=new char [width*height];
+        std::cout << "Bucket : " << bucketName << std::endl;
+        std::cout << "Object : " << object_request.GetKey() << std::endl;
 
-    TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH, width);
-    TIFFSetField(tiff, TIFFTAG_IMAGELENGTH, height);
-    TIFFSetField(tiff, TIFFTAG_BITSPERSAMPLE, bitsPerSample);
-    TIFFSetField(tiff, TIFFTAG_SAMPLEFORMAT, sampleFormat);
-    TIFFSetField(tiff, TIFFTAG_SAMPLESPERPIXEL, 1);
-    TIFFSetField(tiff, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-    TIFFSetField(tiff, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-    TIFFSetField(tiff, TIFFTAG_ROWSPERSTRIP, height);
-    TIFFSetField(tiff, TIFFTAG_SOFTWARE, "S3 Test");
+        std::shared_ptr<Aws::IOStream> aws_stream =
+            Aws::MakeShared<Aws::StringStream>("");
 
-    unsigned long stripSize;
-    stripSize = (unsigned long)TIFFStripSize(tiff);
+        std::ostream *tiff_data = aws_stream.get();
 
-    int sizeY;
-    TIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &sizeY);
-    TIFFWriteEncodedStrip(tiff, 0, image, stripSize);
+        TIFF *tiff = TIFFStreamOpen("TIFF", tiff_data);
+        // TIFF *tiff = TIFFOpen("test.tiff", "w");
+        // if (!tiff) {
+        //     std::cerr << "Unable to open TIFF file for writing." << std::endl;
+        //     return 1;
+        // }
 
-    TIFFClose(tiff);
+        int bitsPerSample = 8, sampleFormat = SAMPLEFORMAT_INT, samplesPerPixel;
+        int width = 1024, height = 1024;
+        char *image = new char[width * height];
 
-    object_request.SetBody(aws_stream);
+        TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH, width);
+        TIFFSetField(tiff, TIFFTAG_IMAGELENGTH, height);
+        TIFFSetField(tiff, TIFFTAG_BITSPERSAMPLE, bitsPerSample);
+        TIFFSetField(tiff, TIFFTAG_SAMPLEFORMAT, sampleFormat);
+        TIFFSetField(tiff, TIFFTAG_SAMPLESPERPIXEL, 1);
+        TIFFSetField(tiff, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+        TIFFSetField(tiff, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+        TIFFSetField(tiff, TIFFTAG_ROWSPERSTRIP, height);
+        TIFFSetField(tiff, TIFFTAG_SOFTWARE, "S3 Test");
 
-    Aws::S3::Model::PutObjectOutcome object_outcome =
-        s3_client.PutObject(object_request);
-    
-    if (!object_outcome.IsSuccess()) {
-        std::cout << "Error: PutObjectBuffer: " << 
-            object_outcome.GetError().GetMessage() << std::endl;
+        unsigned long stripSize;
+        stripSize = (unsigned long)TIFFStripSize(tiff);
+
+        int sizeY;
+        TIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &sizeY);
+        TIFFWriteEncodedStrip(tiff, 0, image, stripSize);
+
+        TIFFClose(tiff);
+
+        object_request.SetBody(aws_stream);
+
+        Aws::S3::Model::PutObjectOutcome object_outcome =
+            s3_client.PutObject(object_request);
+
+        if (!object_outcome.IsSuccess())
+        {
+            std::cout << "Error: PutObjectBuffer: " << object_outcome.GetError().GetMessage() << std::endl;
             return false;
-    }
+        }
 
-    std::cout << "Success: Object written" << std::endl;
+        std::cout << "Success: Object written" << std::endl;
+    }
 
     return true;
 }
