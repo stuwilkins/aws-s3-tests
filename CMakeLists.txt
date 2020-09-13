@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.8)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # The project name.
-project(s3-demo)
+project(s3tiff)
 
 # Locate the AWS SDK for C++ package.
 # Requires that you build with:
@@ -20,9 +20,9 @@ find_package(TIFF REQUIRED COMPONENTS CXX)
 add_definitions(-DUSE_IMPORT_EXPORT)
 
 # The executable name and its source files.
-add_executable(s3-demo create_bucket.cpp)
+add_executable(s3tiff s3tiff.cpp)
 
 include_directories(${TIFF_INCLUDE_DIRS})
 
 # The libraries used by your executable.
-target_link_libraries(s3-demo ${TIFF_LIBRARIES} ${TIFFXX_LIBRARIES} ${AWSSDK_LINK_LIBRARIES})
+target_link_libraries(s3tiff ${TIFF_LIBRARIES} ${TIFFXX_LIBRARIES} ${AWSSDK_LINK_LIBRARIES})
